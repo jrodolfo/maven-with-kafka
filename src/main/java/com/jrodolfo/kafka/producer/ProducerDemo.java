@@ -1,16 +1,18 @@
 package com.jrodolfo.kafka.producer;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 
 public class ProducerDemo {
 
     public static void main(String[] args) {
 
+        final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
         final String bootstrapServers = "127.0.0.1:9092";
 
         // 1) create Producer properties
@@ -24,10 +26,18 @@ public class ProducerDemo {
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
 
         // 3) create a producer record
-        ProducerRecord<String, String> record = new ProducerRecord<>("first_topic", "hello world");
+        ProducerRecord<String, String> record = new ProducerRecord<>("first_topic", null, "hello world");
 
         // 4) send data - asynchronous!
-        producer.send(record);
+        //producer.send(record);
+        producer.send(record, new Callback() {
+            @Override
+            public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+                if (e != null) {
+                    logger.error("Something bad happened", e);
+                }
+            }
+        });
 
         // 5) flush and close producer
         producer.flush();
